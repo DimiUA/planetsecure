@@ -2392,6 +2392,8 @@ function requestAssetPosition(){
                 App.confirm(LANGUAGE.PROMPT_MSG029, function () {     // "PROMPT_MSG004":"The balance is insufficient, please renew", 
                     loadPageRechargeCredit();    
                 }); 
+            }else if(result.ERROR == "LOCKED"){
+                showModalMessage(TargetAsset.IMEI, LANGUAGE.PROMPT_MSG054);
             }else{                      
                 App.addNotification({
                     hold: 2000,
@@ -2421,6 +2423,8 @@ function requestAssetStatus(){
                 App.confirm(LANGUAGE.PROMPT_MSG029, function () {     // "PROMPT_MSG004":"The balance is insufficient, please renew", 
                     loadPageRechargeCredit();    
                 }); 
+            }else if(result.ERROR == "LOCKED"){
+                showModalMessage(TargetAsset.IMEI, LANGUAGE.PROMPT_MSG054);
             }else{ 
                 App.addNotification({
                     hold: 2000,
@@ -2678,6 +2682,21 @@ function showRestrictedAccessMessage(){
             }            
         ]
     });    
+}
+
+function showModalMessage(header, body){
+    var modalTex = '<div class="color-red custom-modal-title">'+ header +'</div>' +
+                    '<div class="custom-modal-text">'+ body +'</div>';                            
+    App.modal({
+           title: '<div class="custom-modal-logo-wrapper"><img class="custom-modal-logo" src="resources/images/logo.png" alt=""/></div>',
+            text: modalTex,                                
+         buttons: [
+            {
+                text: LANGUAGE.COM_MSG38
+            },
+            
+        ]
+    });          
 }
 
 function loadPageAssetAlarm(){
@@ -3083,7 +3102,7 @@ function loadPageLocation(params){
     	time : '',
     };
 
-    if (params && parseFloat(params.lat) !== 0 && parseFloat(params.lng) !== 0 || params && parseFloat(params.Lat) !== 0 && parseFloat(params.Lng) !== 0 || !params && parseFloat(asset.posInfo.lat) !== 0 && parseFloat(asset.posInfo.lng) !== 0) {
+    if (params && parseFloat(params.lat) !== 0 && parseFloat(params.lng) !== 0 || params && parseFloat(params.Lat) !== 0 && parseFloat(params.Lng) !== 0 || !params && asset && parseFloat(asset.posInfo.lat) !== 0 && parseFloat(asset.posInfo.lng) !== 0) {
     	if (params) {
     		if (params.Lat && params.Lng) {
     			window.PosMarker[TargetAsset.IMEI] = L.marker([params.Lat, params.Lng], {icon: Protocol.MarkerIcon[0]}); 
