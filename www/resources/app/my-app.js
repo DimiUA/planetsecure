@@ -35,7 +35,7 @@ function getPlusInfo(){
             localStorage.PUSH_DEVICE_TOKEN = uid;
             //localStorage.PUSH_DEVICE_TOKEN = "75ba1639-92ae-0c4c-d423-4fad1e48a49d"
         localStorage.PUSH_APPID_ID = 'webapp';
-        localStorage.DEVICE_TYPE = "webapp";        
+        localStorage.DEVICE_TYPE = "web";        
     }
 }
 
@@ -210,16 +210,17 @@ function backFix(event){
         mainView.router.back();
     } 
 }
+
 // Initialize your app
 var App = new Framework7({
-    animateNavBackIcon: true,    
-    swipeBackPage: false,    
+    swipePanel: 'left',   
+    swipePanelActiveArea: 32,
+    swipeBackPage: false,
+    material: true,
     //pushState: true,       
-    swipePanel: 'left', 
     allowDuplicateUrls: true,    
     sortable: false,    
     modalTitle: 'PlanetSecure',
-    notificationTitle: 'PlanetSecure',
     precompileTemplates: true,
     template7Pages: true,
     onAjaxStart: function(xhr){
@@ -235,8 +236,8 @@ var $$ = Dom7;
 
 // Add view
 var mainView = App.addView('.view-main', {
-    domCache: true,     
-    dynamicNavbar: true,
+    domCache: true,  
+    swipeBackPage: false
 });
 
 var AppDetails = {
@@ -298,18 +299,15 @@ var html = Template7.templates.template_Login_Screen();
 $$(document.body).append(html); 
 html = Template7.templates.template_Popover_Menu();
 $$(document.body).append(html);
-/*html = Template7.templates.template_AssetList();*/
-$$('.index-title').html(LANGUAGE.MENU_MSG05);
-$$('.index-search-input').attr('placeholder',LANGUAGE.COM_MSG06);
-$$('.index-search-cancel').html(LANGUAGE.COM_MSG04);
-$$('.index-search-nothing-found').html(LANGUAGE.COM_MSG05);
+html = Template7.templates.template_AssetList();
+$$('.navbar-fixed').append(html);
 
 
 var cameraButtons = [
     {
         text: LANGUAGE.PROMPT_MSG025,
         onClick: function () {
-            getImage(1);
+           getImage(1);
         }
     },
     {
@@ -353,10 +351,10 @@ var virtualAssetList = App.virtualList('.assets_list', {
     height: function (item) {
         var asset = POSINFOASSETLIST[item.IMEI];        
         var assetFeaturesStatus = Protocol.Helper.getAssetStateInfo(asset);        
-        var height = 79; 
+        var height = 109; 
         //console.log(assetFeaturesStatus);
         if (assetFeaturesStatus && assetFeaturesStatus.voltage && assetFeaturesStatus.fuel || assetFeaturesStatus && assetFeaturesStatus.battery && assetFeaturesStatus.fuel || assetFeaturesStatus && assetFeaturesStatus.battery && assetFeaturesStatus.voltage) {
-            height = 100;
+            height = 145;
         }
         return height; //display the image with 50px height
     },
@@ -374,6 +372,7 @@ var virtualAssetList = App.virtualList('.assets_list', {
             var assetImg = getAssetImg(item, {'assetList':true});                    
             
             if (assetFeaturesStatus && assetFeaturesStatus.stats) {
+             
                 if (item.PayPlanName) {
                     item.PayPlanName = Protocol.Helper.getAssetPayPlanName(item.PayPlanName);
                 }
@@ -386,7 +385,7 @@ var virtualAssetList = App.virtualList('.assets_list', {
                 ret +=                  '<div class="item-after"><i id="signal-state'+item.IMEI+'" class="f7-icons icon-other-signal '+assetFeaturesStatus.GSM.state+'"></i><i id="satellite-state'+item.IMEI+'" class="f7-icons icon-other-satellite '+assetFeaturesStatus.GPS.state+'"></i></div>';
                 ret +=          '</div>';
                 //ret +=          '<div id="status-state'+item.IMEI+'" class="item-subtitle '+assetFeaturesStatus.status.state+'"><i class="icon-status-fix icon-data-status-1"></i><span id="status-value'+item.IMEI+'">'+assetFeaturesStatus.status.value+'</span></div>';
-      /*          ret += 			'<div id="plan-name'+item.IMEI+'" class="item-subtitle">'+ item.PayPlanName +'</div>';*/
+                ret += 			'<div id="plan-name'+item.IMEI+'" class="item-subtitle">'+ item.PayPlanName +'</div>';
                 ret +=          '<div class="item-text">';
                 ret +=              '<div class="row no-gutter">';                            
                                     if (assetFeaturesStatus.speed) {
@@ -403,7 +402,7 @@ var virtualAssetList = App.virtualList('.assets_list', {
                                     }  
                                     if (assetFeaturesStatus.battery) {
                 ret +=                  '<div class="col-50">';
-                ret +=                     '<i class="f7-icons icon-other-data-battery-level asset_list_icon color-dealer"></i>';                 
+                ret +=                     '<i class="f7-icons icon-other-data-battery-level-1 asset_list_icon color-dealer"></i>';                 
                 ret +=                     '<span id="battery-value'+item.IMEI+'" class="">'+assetFeaturesStatus.battery.value+'</span>';
                 ret +=                  '</div>';
                                     }  
@@ -500,6 +499,28 @@ $$('body').on('click', '.routeButton', function(){
     
 });
 
+$$('.login-form').on('submit', function (e) {    
+    e.preventDefault();     
+    preLogin(); 
+    return false;
+});
+
+$$('body').on('click', '.notification_button', function(e){    
+    getNewNotifications({'loadPageNotification':true}); 
+    $$('.notification_button').removeClass('new_not'); 
+});
+
+$$('body').on('click', '.deleteAllNotifications', function(){
+    App.confirm(LANGUAGE.PROMPT_MSG016, function () {        
+        removeAllNotifications();
+        $$('.deleteAllNotifications').addClass('disabled');
+        mainView.router.back({              
+            pageName: 'index', 
+            force: true
+        }); 
+    });
+});
+
 /*$$('body').on('click', '.navbar_title_index ', function(){
     //var payload = {};
     //console.log('')
@@ -521,28 +542,6 @@ $$('body').on('click', '.routeButton', function(){
     showMsgNotification([payload]);
 });*/
 
-$$('.login-form').on('submit', function (e) {    
-    e.preventDefault();     
-    preLogin(); 
-    return false;
-});
-
-$$('body').on('click', '.notification_button', function(e){    
-    getNewNotifications({'loadPageNotification':true}); 
-    $$('.notification_button').removeClass('new_not'); 
-});
-
-$$('body').on('click', '.deleteAllNotifications', function(){
-    App.confirm(LANGUAGE.PROMPT_MSG016, function () {        
-       removeAllNotifications();
-       $$('.deleteAllNotifications').addClass('disabled');
-        mainView.router.back({              
-            pageName: 'index', 
-            force: true
-        });  
-    });
-});
-
 $$(document).on('refresh','.pull-to-refresh-content',function(e){ 
     getNewNotifications({'ptr':true});     
 });
@@ -560,10 +559,10 @@ $$(document).on('change', '.leaflet-control-layers-selector[type="radio"]', func
     }
 });
 
-$$('body').on('click', '#menu li', function () {
+$$('#menu li').on('click', function () {
     var id = $$(this).attr('id');
     var activePage = App.getCurrentView().activePage;                 
-    //console.log(id);
+
     switch (id){
         case 'menuHome':
             mainView.router.back({              
@@ -580,17 +579,17 @@ $$('body').on('click', '#menu li', function () {
             if ( typeof(activePage) == 'undefined' || (activePage && activePage.name != "user.recharge.credit")) {           
                 loadPageRechargeCredit();      
             }
-        	break;  
+        	break;    
+        case 'menuSupport': 
+            if ( typeof(activePage) == 'undefined' || (activePage && activePage.name != "user.support")) {           
+                loadPageSupport();      
+            }
+            break;
         case 'menuAlarms':           
             if ( typeof(activePage) == 'undefined' || (activePage && activePage.name != "alarms.assets")) {
                 checkBalanceAndLoadPage('alarms.assets'); 
             }
-            break;  
-        /*case 'menuSupport': 
-            if ( typeof(activePage) == 'undefined' || (activePage && activePage.name != "user.support")) {           
-                loadPageSupport();      
-            }
-            break;*/
+            break;
                 
         case 'menuLogout':
             App.confirm(LANGUAGE.PROMPT_MSG012, LANGUAGE.MENU_MSG04, function () {        
@@ -636,7 +635,7 @@ App.onPageInit('notification', function(page){
         //List of array items
         items: [],
         height: function (item) {
-			var height = 56; 
+			var height = 67; 
 			return height; //display the image with 50px height
 		},
         // Display the each item using Template7 template parameter
@@ -659,10 +658,10 @@ App.onPageInit('notification', function(page){
 	                                '<div class="swipeout-content item-content">' +
 	                                    '<div class="item-inner">' +
 	                                        '<div class="item-title-row">' +
-	                                            '<div class="item-title">'+item.AssetName+'</div>' +
+	                                            '<div class="item-title color-gray">'+item.alarm+'</div>' +
 	                                            '<div class="item-after">'+item.CreateDateTime+'</div>' +
 	                                        '</div>' +
-	                                        '<div class="item-subtitle">'+item.alarm+'</div>' +                                        
+	                                        '<div class="item-subtitle">'+item.AssetName+'</div>' +                                        
 	                                    '</div>' +
 	                                '</div>' +                      
 	                                '<div class="swipeout-actions-left">' +                             
@@ -676,17 +675,17 @@ App.onPageInit('notification', function(page){
 	                                '<div class="swipeout-content item-content">' +
 	                                    '<div class="item-inner">' +
 	                                        '<div class="item-title-row">' +
-	                                            '<div class="item-title">'+item.AssetName+'</div>' +
+	                                            '<div class="item-title color-gray">'+item.alarm+'</div>' +
 	                                            '<div class="item-after">'+item.PositionTime+'</div>' +
 	                                        '</div>' +
-	                                        '<div class="item-subtitle">'+item.alarm +'</div>' +                                        
+	                                        '<div class="item-subtitle">'+item.AssetName +'</div>' +                                        
 	                                    '</div>' +
 	                                '</div>' +                      
 	                                '<div class="swipeout-actions-left">' +                             
 	                                    '<a href="#" class="swipeout-delete swipeout-overswipe" data-confirm="'+LANGUAGE.PROMPT_MSG010+'" data-confirm-title="'+LANGUAGE.PROMPT_MSG014+'" data-close-on-cancel="true"><i class="f7-icons icon-header-delete"</i></a>' +
 	                                '</div>' +
 	                            '</li>';
-	               /* break;
+	                /*break;
 
 	                default:                	      	
 	                   
@@ -705,10 +704,10 @@ App.onPageInit('notification', function(page){
 		                            '<div class="swipeout-content item-content">' +
 		                                '<div class="item-inner">' +
 		                                    '<div class="item-title-row">' +
-		                                        '<div class="item-title">'+item.name+'</div>' +
+		                                        '<div class="item-title color-gray">'+item.title+'</div>' +
 		                                        '<div class="item-after">'+item.time+'</div>' +
 		                                    '</div>' +
-		                                    '<div class="item-subtitle">'+item.title+'</div>' +                                        
+		                                    '<div class="item-subtitle">'+item.name+'</div>' +                                        
 		                                '</div>' +
 		                            '</div>' +                      
 		                            '<div class="swipeout-actions-left">' +                             
@@ -800,7 +799,7 @@ App.onPageInit('user.recharge.credit', function (page) {
 
 });
 App.onPageInit('asset', function (page) { 
-    //var buttonEditAsset = $$(page.container).find('.editAssetButton');
+    var buttonEditAsset = $$(page.container).find('.editAssetButton');
     var loadPageAlarm = $$(page.container).find('.loadPageAlarm');
     var loadPageTrackingInterval = $$(page.container).find('.loadPageTrackingInterval');
     var loadPageAssetPosition = $$(page.container).find('.loadPageAssetPosition');
@@ -817,7 +816,7 @@ App.onPageInit('asset', function (page) {
         App.actions(cameraButtons);        
     }); 
 
-    $$('.editAssetButton').on('click', function(){    
+    buttonEditAsset.on('click', function(){    
     	var assetImg = getAssetImg(asset, {'assetPage':true}); 
     	//console.log(asset);
         mainView.router.load({
@@ -1076,7 +1075,7 @@ App.onPageInit('asset.tracking.interval', function (page) {
 	    upgradeNowButtonEl:  $$(page.container).find('.upgradeNowButton'),
 	    /*trackingPeriodElVal: $$(page.container).find('[name="tracking-period"]:checked').val(),*/
 	    bottomIndicator: $$(page.container).find('.bottom-indicator'),	    
-	    assetImei: assetImeiInput ? assetImeiInput : TargetAsset.IMEI,
+	    assetImei: assetImeiInput ? assetImeiInput : TargetAsset.IMEI,        
     };
     if (CountryCode == 'USA') {
         params.currency = 'USD';
@@ -1111,10 +1110,10 @@ App.onPageInit('asset.tracking.interval', function (page) {
                 if (result.MajorCode == '000') { 
                     if (paylink) {
                         if (typeof navigator !== "undefined" && navigator.app) {                
-                            navigator.app.loadUrl(href, {openExternal: true}); 
-                        } else {
-                            window.open(href,'_blank');
-                        }
+            navigator.app.loadUrl(href, {openExternal: true}); 
+        } else {
+            window.open(href,'_blank');
+        }
                         setTimeout(function(){
                             App.modal({                
                                 text: LANGUAGE.PROMPT_MSG030, //LANGUAGE.PROMPT_MSG017
@@ -1652,19 +1651,25 @@ App.onPageInit('alarms.assets', function (page) {
         items: newAssetlist,
         renderItem: function (index, item) {
             var ret = '';
-            ret +=  '<li data-index="'+index+'">';
-            ret +=      '<label class="label-checkbox item-content">';          
-            if (item.Selected) {
+            var assetImg = getAssetImg(item, {'assetList':true});
+            ret +=  '<li data-index="'+index+'" >';
+            ret +=      '<label class="label-checkbox item-content no-fastclick">';
+                if (item.Selected) {
                     ret +=          '<input type="checkbox" name="alarms-assets" value="" data-imei="' + item.IMEI + '" checked="true" >';
                 }else{
                     ret +=          '<input type="checkbox" name="alarms-assets" value="" data-imei="' + item.IMEI + '" >';
                 }            
-            ret +=          '<div class="item-media"><i class="icon icon-form-checkbox"></i></div>';
+            ret +=          '<div class="item-media">'+assetImg+'</div>';
             ret +=          '<div class="item-inner">';
-            ret +=              '<div class="item-title">' + item.Name + '</div>';
+            ret +=              '<div class="item-title-row">';
+            ret +=                  '<div class="item-title ">' + item.Name + '</div>';
+            ret +=                  '<div class="item-after">';
+            ret +=                      '<i class="icon icon-form-checkbox"></i>';
+            ret +=                  '</div>';
+            ret +=              '</div>';
             ret +=          '</div>';
             ret +=      '</label>';
-            ret +=  '</li>';         
+            ret +=  '</li>';            
             
             return  ret;
         }
@@ -1826,10 +1831,8 @@ function clearUserInfo(){
     getPlusInfo();
     var deviceToken = !localStorage.PUSH_DEVICE_TOKEN ? '' : localStorage.PUSH_DEVICE_TOKEN;
     var mobileToken = !localStorage.PUSH_MOBILE_TOKEN ? '' : localStorage.PUSH_MOBILE_TOKEN;
-    var elem_rc_flag = !localStorage.elem_rc_flag ? '' : localStorage.elem_rc_flag; 
     var MinorToken = getUserinfo().MinorToken; 
     var userName = localStorage.ACCOUNT;
-
     window.PosMarker = {};
     TargetAsset = {};
     POSINFOASSETLIST = {};    
@@ -1853,8 +1856,8 @@ function clearUserInfo(){
     if (virtualAssetList) {
         virtualAssetList.deleteAllItems();
     }
-    if (elem_rc_flag) {
-        localStorage.elem_rc_flag = 1;
+    if (userName) {
+        $$("input[name='account']").val(userName);
     }
 
     if (deviceToken) {
@@ -1864,14 +1867,11 @@ function clearUserInfo(){
         localStorage.PUSH_MOBILE_TOKEN = mobileToken;
     }
 
-    if (userName) {
-        $$("input[name='account']").val(userName);
-    }
-    //if(MinorToken){
+    if(MinorToken){
         JSON1.request(API_URL.URL_GET_LOGOUT.format(MinorToken, deviceToken, mobileToken), function(result){
                         console.log(result);                        
         });         
-    //}   
+    }   
 }
 
 function preLogin(){
@@ -1904,6 +1904,7 @@ function reGetPushDetails(){
     }           
 }
 
+
 function login(){      
     getPlusInfo();
     //hideKeyboard();    
@@ -1927,11 +1928,7 @@ function login(){
             App.hidePreloader();     
             console.log(result);      
             if(result.MajorCode == '000') {
-                //localStorage.elem_rc_flag = 1;
-                if (result.Data.elemRc) {
-                    localStorage.elem_rc_flag = 1;
-                    //localStorage.removeItem('elem_rc_flag');
-                }
+                
                 if(account.val()) {
                     localStorage.ACCOUNT = account.val();
                     localStorage.PASSWORD = password.val();
@@ -1942,7 +1939,6 @@ function login(){
                 setAssetList(result.Data.AssetArray);
                 updateUserCrefits(result.Data.UserInfo.SMSTimes);
                 updateMenuUserData(result.Data.UserInfo);
-                updateSupportUrl();
                                                  
                 //webSockConnect();
                 getNewNotifications();
@@ -2027,45 +2023,17 @@ function init_AssetList() {
     //console.log(newAssetlist);
    
     virtualAssetList.replaceAllItems(newAssetlist);
-    initExtend();
-
-    //setTimeout(function(){
+    
+    setTimeout(function(){
         updateAssetsPosInfoTimer = setInterval(function(){
             updateAssetsPosInfo();
         }, 60000);
-    //}, 60000);
+    }, 60000);
 
     //console.log(assetList);
 
     
 }
-
-
-var elem_rc =   '<li class="item-content list-panel-all close-panel item-link" id="menuRechargeCredit" style="display:none;">' +
-                   '<div class="item-media">' +
-                        '<i class="f7-icons icon-menu-recharge-credit"></i>' +
-                    '</div>' +
-                    '<div class="item-inner">' +
-                        '<div class="item-title color-black">' + LANGUAGE.MENU_MSG02 + '</div>' +
-                    '</div>' +
-                '</li>';
-$$(elem_rc).insertAfter('#menuHome');
-
-var elem_rc =   '<div class="menu_remainings" style="display:none;">' +
-                    LANGUAGE.COM_MSG30 + ': <span class="remaining_counter">-</span> ' + LANGUAGE.COM_MSG31 +
-                '</div>';
-$$(elem_rc).insertAfter('#menu');
-
-function initExtend(){ 
-    if ($$("#menuRechargeCredit").length !== 0 && localStorage.elem_rc_flag) {
-        $$('body').find('#menuRechargeCredit').css('display', 'flex');
-    }    
-    if ($$(".menu_remainings").length !== 0 && localStorage.elem_rc_flag) {
-        $$('body').find('.menu_remainings').css('display', 'block');
-    }     
-}
-
-
 function initSearchbar(searchContainer){  
     if (!searchContainer) {
         if (searchbar) {        
@@ -2316,16 +2284,16 @@ function setAssetListPosInfo(listObj){
                         POSINFOASSETLIST[imei].initPosInfo(posData); 
                         
                     });
-                    
+                     
                 }
                    
                 //console.log(POSINFOASSETLIST);
-
+                     
             }else{
                 //console.log(result);
             }
             init_AssetList(); 
-            initSearchbar(); 
+            initSearchbar();
 
             localStorage.loginDone = 1; 
             App.hidePreloader();          
@@ -2362,7 +2330,7 @@ function updateAssetsPosInfo(){
                     imei = posData[1];     
                     if (POSINFOASSETLIST[imei] && !POSINFOASSETLIST[imei].posInfo.positionTime || POSINFOASSETLIST[imei] && posData[5] >= POSINFOASSETLIST[imei].posInfo.positionTime._i ) {                   
                         POSINFOASSETLIST[imei].initPosInfo(posData); 
-                    }                 
+                    }                
                                     
                 }); 
                 updateAssetsListStats();              
@@ -2573,8 +2541,7 @@ function loadPageAsset(){
             Name: TargetAsset.Name,
             Remainings: remainings,
             Geolock: geolockState,
-            Immobilise: immobiliseState,
-            rcFlag: localStorage.elem_rc_flag,
+            Immobilise: immobiliseState
         }
         
     });
@@ -2584,6 +2551,14 @@ function loadPageAsset(){
 function loadPageRechargeCredit(){
     var MinorToken = getUserinfo().MinorToken;    
     var CountryCode = getUserinfo().UserInfo.CountryCode;
+
+    /*AUS*/
+    /*var buttons = {
+        'button10' : 'KPF23R37HEJAC',
+        'button50' : 'QYHM382HALQBG',
+        'button100' : '7GB5ZBQQU5RAY',
+        'buttonCur' : 'AUD' 
+    };  */  
 
     var buttons = {
         'button10' : '4UGU3DZN9SEMC',
@@ -2616,6 +2591,7 @@ function loadPageRechargeCredit(){
 
     });           
 }
+
 
 function checkBalanceAndLoadPage(pageName){
     if (pageName) {
@@ -2777,7 +2753,7 @@ function updateAlarmOptVal(alarmOptions) {
     localStorage.setItem("COM.QUIKTRAK.QUIKLOC8.ASSETLIST", JSON.stringify(assetList));
 }
 
-function updateSupportUrl(){
+function loadPageSupport(){
 	var userInfo = getUserinfo().UserInfo;
 
 	var param = {
@@ -2785,38 +2761,40 @@ function updateSupportUrl(){
 		'loginName':'',
 		'email':'',
 		'phone':'',
-        'service':'25', //means quikloc8.co in support page
+        'service':'22', //means quikloc8.co in support page
 	};
 	
 	if (userInfo.FirstName) {
-		param.name = userInfo.FirstName.trim();
-	}
-	if (userInfo.SurName) {
-		param.name = param.name + ' ' + userInfo.SurName.trim();
-		param.name = param.name.trim();
-	}
-	if (localStorage.ACCOUNT) {
-		param.loginName = localStorage.ACCOUNT.trim();
+        param.name = userInfo.FirstName.trim();
+    }
+    if (userInfo.SurName) {
+        param.name = param.name + ' ' + userInfo.SurName.trim();
+        param.name = param.name.trim();
+    }
+    if (localStorage.ACCOUNT) {
+        param.loginName = localStorage.ACCOUNT.trim();
         param.loginName = encodeURIComponent(param.loginName);
-	}
-	if (userInfo.Email) {
-		param.email = userInfo.Email.trim();
+    }
+    if (userInfo.Email) {
+        param.email = userInfo.Email.trim();
         param.email = encodeURIComponent(param.email);
-	}
-	if (userInfo.Mobile) {
-		param.phone = userInfo.Mobile.trim();
+    }
+    if (userInfo.Mobile) {
+        param.phone = userInfo.Mobile.trim();
         param.phone = encodeURIComponent(param.phone);
-	}
-
-	//API_URL.URL_SUPPORT = "http://support.quiktrak.eu/?name={0}&loginName={1}&email={2}&phone={3}";
-	//var href = API_URL.URL_SUPPORT;
+    }    
     if (param.name) {
         param.name = encodeURIComponent(param.name);
     }
+	//API_URL.URL_SUPPORT = "http://support.quiktrak.eu/?name={0}&loginName={1}&email={2}&phone={3}";
+	//var href = API_URL.URL_SUPPORT;
 	var href = API_URL.URL_SUPPORT.format(param.name,param.loginName,param.email,param.phone,param.service); 
-    //console.log(href);
-	$$('#menuSupport').attr('href',href);
 	
+	if (typeof navigator !== "undefined" && navigator.app) {                
+            navigator.app.loadUrl(href, {openExternal: true}); 
+        } else {
+            window.open(href,'_blank');
+        }
 }
 
 function checkBalance(alert){
@@ -2972,7 +2950,7 @@ function loadPageStatusMessage(params){
         if (params.Acc && params.Acc == 'ON') {
         	accGreen = true;
 	    }  
-
+        //console.log(params);
 	    params.AssetImg = assetImg;
 	    params.Direction = deirectionCardinal;
         params.DirectionNumber = direct+'&deg';
@@ -2983,7 +2961,7 @@ function loadPageStatusMessage(params){
         if (asset && params.LaunchHours) {
             params.EngineHours = Protocol.Helper.getEngineHours(asset, params.LaunchHours);
         }
-        console.log(params);
+       
 	    mainView.router.load({
 		    url:'resources/templates/asset.status.message.html',
 		    context:params		    
@@ -3102,7 +3080,7 @@ function loadPageLocation(params){
     	time : '',
     };
 
-    if (params && parseFloat(params.lat) !== 0 && parseFloat(params.lng) !== 0 || params && parseFloat(params.Lat) !== 0 && parseFloat(params.Lng) !== 0 || !params && asset && parseFloat(asset.posInfo.lat) !== 0 && parseFloat(asset.posInfo.lng) !== 0) {
+    if (params && parseFloat(params.lat) !== 0 && parseFloat(params.lng) !== 0 || params && parseFloat(params.Lat) !== 0 && parseFloat(params.Lng) !== 0 || !params && parseFloat(asset.posInfo.lat) !== 0 && parseFloat(asset.posInfo.lng) !== 0) {
     	if (params) {
     		if (params.Lat && params.Lng) {
     			window.PosMarker[TargetAsset.IMEI] = L.marker([params.Lat, params.Lng], {icon: Protocol.MarkerIcon[0]}); 
@@ -3303,9 +3281,10 @@ function getNewData(){
             if(result.MajorCode == '000') {                
                 setUserinfo(result.Data);
                 updateUserCrefits(result.Data.UserInfo.SMSTimes);
-
+                
                 if (result.Data.Devices) {
-                    updateAssetList2(result.Data.AssetArray);                    
+                    updateAssetList2(result.Data.AssetArray);
+                    
                 }                
             }
         },
@@ -3544,7 +3523,7 @@ function clearNotificationList(){
     localStorage.setItem("COM.QUIKTRAK.QUIKLOC8.NOTIFICATIONLIST", JSON.stringify(list));
 }
 
-function showNotification(list){    
+function showNotification(list){	
     var data = null;
     var isJson =''; 
     var newList = [];
@@ -3583,11 +3562,11 @@ function showNotification(list){
                     data.time = data.time.replace("T", " ");                                      
                 }  
                 if (data.CreateDateTime) {
-                    data.CreateDateTime = data.CreateDateTime.replace("T", " ");        
+                	data.CreateDateTime = data.CreateDateTime.replace("T", " ");        
                 }
                 //console.log(data); 
                 if (data.alarm) {
-                    data.alarm = toTitleCase(data.alarm);
+                	data.alarm = toTitleCase(data.alarm);
                 }
                 //console.log(data);
                 
@@ -3601,7 +3580,7 @@ function showNotification(list){
 }
 
 function processClickOnPushNotification(msgJ){
-	console.log(msgJ);
+	//console.log(msgJ);
     if (Array.isArray(msgJ)) {
         var msg = null;
         if (msgJ[0].payload) {
@@ -3617,7 +3596,7 @@ function processClickOnPushNotification(msgJ){
         }      
        
         //console.log(msg);
-        if( msg && msg.alarm && msg.alarm.toLowerCase() == 'status' ){ 
+        if( msg && msg.alarm && msg.alarm.toLowerCase() == 'status' ){        
             loadPageStatusMessage(msg);                               
         }else if (msg && parseFloat(msg.lat) && parseFloat(msg.lat) || msg && parseFloat(msg.Lat) && parseFloat(msg.Lat)) { 
         	TargetAsset.IMEI = msg.Imei ? msg.Imei : msg.imei;
@@ -3655,7 +3634,7 @@ function showMsgNotification(arrMsgJ){
 	                message: message,
 	                button: {
 	                    text: LANGUAGE.COM_MSG12,  
-	                    color: 'dealer',                  
+	                    color: 'gray',                  
 	                    close: false,         
 	                },
 	                onClick: function () { 
@@ -3772,4 +3751,5 @@ function getImage(source){
     }
            
 }
+
 
